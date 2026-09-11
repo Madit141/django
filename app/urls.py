@@ -19,10 +19,20 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 from marketplace.views import ShowProductsView
-from marketplace.api import ProductsViewset
+from marketplace.api import (
+    CustomersViewset,
+    OrderItemsViewset,
+    OrdersViewset,
+    ProductsViewset,
+    ProductTypesViewset,
+)
 
 router = DefaultRouter()
 router.register("products", ProductsViewset, basename="products")
+router.register("product-types", ProductTypesViewset, basename="product-types")
+router.register("customers", CustomersViewset, basename="customers")
+router.register("orders", OrdersViewset, basename="orders")
+router.register("order-items", OrderItemsViewset, basename="order-items")
 
 urlpatterns = [
     path('', ShowProductsView.as_view(), name='product_list'),
