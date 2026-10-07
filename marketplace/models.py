@@ -1,7 +1,7 @@
 from django.db import models
 
 class ProductType(models.Model):
-    name = models.TextField("Навазние")
+    name = models.TextField("Название")
 
     class Meta:
         verbose_name = "Тип"
@@ -12,7 +12,7 @@ class ProductType(models.Model):
 
 class Product(models.Model):
     name = models.TextField("Название товара")
-    quantity = models.TextField("Количество")
+    quantity = models.PositiveIntegerField("Количество", default=0)
     category = models.ForeignKey(ProductType, on_delete=models.CASCADE, null=True, verbose_name="Категория")
 
     class Meta:
@@ -48,7 +48,7 @@ class Order(models.Model):
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, verbose_name="Заказ")
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name="Товар")
-    count = models.TextField("Количество")
+    count = models.PositiveIntegerField("Количество", default=1)
 
     class Meta:
         verbose_name = "Позиция заказа"
