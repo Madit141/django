@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from marketplace.models import Product, ProductType, Customer, Order, OrderItem
+from marketplace.models import Product, ProductType, Customer, Order, OrderItem, Profile
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
@@ -23,3 +23,11 @@ class OrderAdmin(admin.ModelAdmin):
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
     list_display = ["id", "order", "product", "count"]
+
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ["id", "user", "role"]
+
+    def has_add_permission(self, request):
+        return False

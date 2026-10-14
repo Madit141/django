@@ -1,4 +1,7 @@
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth.models import User
 
 class ProductType(models.Model):
     name = models.TextField("Название")
@@ -14,6 +17,7 @@ class Product(models.Model):
     name = models.TextField("Название товара")
     quantity = models.PositiveIntegerField("Количество", default=0)
     category = models.ForeignKey(ProductType, on_delete=models.CASCADE, null=True, verbose_name="Категория")
+    image = models.ImageField("Картинка", null=True, upload_to="products")
 
     class Meta:
         verbose_name = "Товар"
@@ -56,3 +60,24 @@ class OrderItem(models.Model):
 
     def __str__(self) -> str:
         return f"{self.product.name} ({self.count})"
+
+class Profile(models.Model):
+    class Role(models.IntegerChoices):
+        UNDEFINED = 0
+        CUSTOMER = 1
+        SELLER = 2
+
+    user = models.OneToOneField("auth.User", on_delete=models.CASCADE)
+    role = models.IntegerField(choices=Role, default=Role.UNDEFINED)
+
+    class Meta:
+        verbose_name = "Профиль"
+        verbose_name_plural = "Профили"
+
+    def __str__(self) -> str:
+        return self.user.username if self.user else "no_user"
+
+@receiver(post_save, sender=User)
+def on_user_create(sender, instance, created, *args, **kwargs):
+    if created:
+        Profile.objects.create(user=instance, role=Profile.Role.UNDEFINED)
