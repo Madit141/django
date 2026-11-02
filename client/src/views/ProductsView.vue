@@ -7,6 +7,8 @@ const products = ref([]);
 const productTypes = ref([]);
 const productToAdd = ref({});
 const productToEdit = ref({});
+const productPictureRef = ref();
+const productAddImageUrl = ref();
 
 const productTypesById = computed(() => {
   return _.keyBy(productTypes.value, x => x.id);
@@ -22,10 +24,35 @@ async function fetchProductTypes() {
   productTypes.value = r.data;
 }
 
+function productAddPictureChange() {
+  if (productPictureRef.value?.files[0]) {
+    productAddImageUrl.value = URL.createObjectURL(productPictureRef.value.files[0]);
+  }
+}
+
 async function onProductAdd() {
-  await axios.post("/api/products/", {
-    ...productToAdd.value,
+  const formData = new FormData();
+
+  if (productPictureRef.value?.files[0]) {
+    formData.append('image', productPictureRef.value.files[0]);
+  }
+
+  formData.set('name', productToAdd.value.name);
+  formData.set('quantity', productToAdd.value.quantity);
+  formData.set('category', productToAdd.value.category);
+
+  await axios.post("/api/products/", formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
   });
+
+  productToAdd.value = {};
+  if (productPictureRef.value) {
+    productPictureRef.value.value = '';
+  }
+  productAddImageUrl.value = null;
+
   await fetchProducts();
 }
 
@@ -40,7 +67,9 @@ async function onProductEditClick(product) {
 
 async function onUpdateProduct() {
   await axios.put(`/api/products/${productToEdit.value.id}/`, {
-    ...productToEdit.value,
+    name: productToEdit.value.name,
+    quantity: productToEdit.value.quantity,
+    category: productToEdit.value.category,
   });
   await fetchProducts();
 }
@@ -89,6 +118,17 @@ onBeforeMount(async () => {
             </div>
           </div>
           <div class="col-auto">
+            <input
+              class="form-control"
+              type="file"
+              ref="productPictureRef"
+              @change="productAddPictureChange"
+            />
+          </div>
+          <div class="col-auto" v-if="productAddImageUrl">
+            <img :src="productAddImageUrl" style="max-height: 60px;" alt="" />
+          </div>
+          <div class="col-auto">
             <button class="btn btn-primary">Добавить</button>
           </div>
         </div>
@@ -99,6 +139,9 @@ onBeforeMount(async () => {
           <div>{{ item.name }}</div>
           <div>Кол-во: {{ item.quantity }}</div>
           <div>{{ productTypesById[item.category]?.name }}</div>
+          <div v-show="item.image">
+            <img :src="item.image" style="max-height: 60px;" alt="" />
+          </div>
           <button
             class="btn btn-success"
             @click="onProductEditClick(item)"
@@ -171,7 +214,7 @@ onBeforeMount(async () => {
   border: 1px solid silver;
   border-radius: 8px;
   display: grid;
-  grid-template-columns: 1fr auto auto auto auto;
+  grid-template-columns: 1fr auto auto auto auto auto;
   gap: 16px;
   align-items: center;
 }

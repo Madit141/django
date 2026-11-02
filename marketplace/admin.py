@@ -12,7 +12,7 @@ class TypeAdmin(admin.ModelAdmin):
 
 @admin.register(Customer)
 class CustomerAdmin(admin.ModelAdmin):
-    list_display = ["id", "first_name", "last_name", "phone"]
+    list_display = ["id", "first_name", "last_name", "phone", "photo"]
 
 
 @admin.register(Order)

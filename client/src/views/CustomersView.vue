@@ -5,16 +5,43 @@ import axios from 'axios';
 const customers = ref([]);
 const customerToAdd = ref({});
 const customerToEdit = ref({});
+const customerPictureRef = ref();
+const customerAddImageUrl = ref();
 
 async function fetchCustomers() {
   const r = await axios.get("/api/customers/");
   customers.value = r.data;
 }
 
+function customerAddPictureChange() {
+  if (customerPictureRef.value?.files[0]) {
+    customerAddImageUrl.value = URL.createObjectURL(customerPictureRef.value.files[0]);
+  }
+}
+
 async function onCustomerAdd() {
-  await axios.post("/api/customers/", {
-    ...customerToAdd.value,
+  const formData = new FormData();
+
+  if (customerPictureRef.value?.files[0]) {
+    formData.append('photo', customerPictureRef.value.files[0]);
+  }
+
+  formData.set('first_name', customerToAdd.value.first_name);
+  formData.set('last_name', customerToAdd.value.last_name);
+  formData.set('phone', customerToAdd.value.phone);
+
+  await axios.post("/api/customers/", formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
   });
+
+  customerToAdd.value = {};
+  if (customerPictureRef.value) {
+    customerPictureRef.value.value = '';
+  }
+  customerAddImageUrl.value = null;
+
   await fetchCustomers();
 }
 
@@ -29,7 +56,9 @@ async function onCustomerEditClick(customer) {
 
 async function onUpdateCustomer() {
   await axios.put(`/api/customers/${customerToEdit.value.id}/`, {
-    ...customerToEdit.value,
+    first_name: customerToEdit.value.first_name,
+    last_name: customerToEdit.value.last_name,
+    phone: customerToEdit.value.phone,
   });
   await fetchCustomers();
 }
@@ -63,6 +92,17 @@ onBeforeMount(async () => {
             </div>
           </div>
           <div class="col-auto">
+            <input
+              class="form-control"
+              type="file"
+              ref="customerPictureRef"
+              @change="customerAddPictureChange"
+            />
+          </div>
+          <div class="col-auto" v-if="customerAddImageUrl">
+            <img :src="customerAddImageUrl" style="max-height: 60px;" alt="" />
+          </div>
+          <div class="col-auto">
             <button class="btn btn-primary">Добавить</button>
           </div>
         </div>
@@ -72,6 +112,9 @@ onBeforeMount(async () => {
         <div v-for="item in customers" class="customer-item">
           <div>{{ item.first_name }} {{ item.last_name }}</div>
           <div>{{ item.phone }}</div>
+          <div v-show="item.photo">
+            <img :src="item.photo" style="max-height: 60px;" alt="" />
+          </div>
           <button
             class="btn btn-success"
             @click="onCustomerEditClick(item)"
@@ -140,7 +183,7 @@ onBeforeMount(async () => {
   border: 1px solid silver;
   border-radius: 8px;
   display: grid;
-  grid-template-columns: 1fr auto auto auto;
+  grid-template-columns: 1fr auto auto auto auto;
   gap: 16px;
   align-items: center;
 }

@@ -30,6 +30,7 @@ class Customer(models.Model):
     first_name = models.TextField("Имя")
     last_name = models.TextField("Фамилия")
     phone = models.TextField("Телефон")
+    photo = models.ImageField("Фото", null=True, upload_to="customers")
 
     class Meta:
         verbose_name = "Покупатель"
