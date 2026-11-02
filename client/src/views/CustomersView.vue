@@ -7,6 +7,9 @@ const customerToAdd = ref({});
 const customerToEdit = ref({});
 const customerPictureRef = ref();
 const customerAddImageUrl = ref();
+const customerEditPictureRef = ref();
+const customerEditImageUrl = ref();
+const modalImageUrl = ref('');
 
 async function fetchCustomers() {
   const r = await axios.get("/api/customers/");
@@ -17,6 +20,16 @@ function customerAddPictureChange() {
   if (customerPictureRef.value?.files[0]) {
     customerAddImageUrl.value = URL.createObjectURL(customerPictureRef.value.files[0]);
   }
+}
+
+function customerEditPictureChange() {
+  if (customerEditPictureRef.value?.files[0]) {
+    customerEditImageUrl.value = URL.createObjectURL(customerEditPictureRef.value.files[0]);
+  }
+}
+
+function openImageModal(url) {
+  modalImageUrl.value = url;
 }
 
 async function onCustomerAdd() {
@@ -52,14 +65,28 @@ async function onRemoveClick(customer) {
 
 async function onCustomerEditClick(customer) {
   customerToEdit.value = { ...customer };
+  customerEditImageUrl.value = customer.photo;
+  if (customerEditPictureRef.value) {
+    customerEditPictureRef.value.value = '';
+  }
 }
 
 async function onUpdateCustomer() {
-  await axios.put(`/api/customers/${customerToEdit.value.id}/`, {
-    first_name: customerToEdit.value.first_name,
-    last_name: customerToEdit.value.last_name,
-    phone: customerToEdit.value.phone,
+  const formData = new FormData();
+  formData.set('first_name', customerToEdit.value.first_name);
+  formData.set('last_name', customerToEdit.value.last_name);
+  formData.set('phone', customerToEdit.value.phone);
+
+  if (customerEditPictureRef.value?.files[0]) {
+    formData.append('photo', customerEditPictureRef.value.files[0]);
+  }
+
+  await axios.patch(`/api/customers/${customerToEdit.value.id}/`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    }
   });
+
   await fetchCustomers();
 }
 
@@ -113,7 +140,15 @@ onBeforeMount(async () => {
           <div>{{ item.first_name }} {{ item.last_name }}</div>
           <div>{{ item.phone }}</div>
           <div v-show="item.photo">
-            <img :src="item.photo" style="max-height: 60px;" alt="" />
+            <img
+              :src="item.photo"
+              style="max-height: 60px; cursor: pointer;"
+              alt=""
+              data-bs-toggle="modal"
+              data-bs-target="#viewCustomerImageModal"
+              @click="openImageModal(item.photo)"
+              title="Нажмите для увеличения"
+            />
           </div>
           <button
             class="btn btn-success"
@@ -157,6 +192,18 @@ onBeforeMount(async () => {
                   <label>Телефон</label>
                 </div>
               </div>
+              <div class="col-12">
+                <label class="form-label text-muted">Изменить фото:</label>
+                <input
+                  type="file"
+                  class="form-control"
+                  ref="customerEditPictureRef"
+                  @change="customerEditPictureChange"
+                />
+              </div>
+              <div class="col-12 text-center" v-if="customerEditImageUrl">
+                <img :src="customerEditImageUrl" style="max-height: 120px;" class="rounded" alt="" />
+              </div>
             </div>
           </div>
           <div class="modal-footer">
@@ -169,6 +216,19 @@ onBeforeMount(async () => {
             >
               Сохранить
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="viewCustomerImageModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Просмотр фото</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body text-center p-2">
+            <img :src="modalImageUrl" class="img-fluid rounded" style="max-height: 75vh;" alt="" />
           </div>
         </div>
       </div>

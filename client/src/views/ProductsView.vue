@@ -9,6 +9,9 @@ const productToAdd = ref({});
 const productToEdit = ref({});
 const productPictureRef = ref();
 const productAddImageUrl = ref();
+const productEditPictureRef = ref();
+const productEditImageUrl = ref();
+const modalImageUrl = ref('');
 
 const productTypesById = computed(() => {
   return _.keyBy(productTypes.value, x => x.id);
@@ -28,6 +31,16 @@ function productAddPictureChange() {
   if (productPictureRef.value?.files[0]) {
     productAddImageUrl.value = URL.createObjectURL(productPictureRef.value.files[0]);
   }
+}
+
+function productEditPictureChange() {
+  if (productEditPictureRef.value?.files[0]) {
+    productEditImageUrl.value = URL.createObjectURL(productEditPictureRef.value.files[0]);
+  }
+}
+
+function openImageModal(url) {
+  modalImageUrl.value = url;
 }
 
 async function onProductAdd() {
@@ -63,14 +76,28 @@ async function onRemoveClick(product) {
 
 async function onProductEditClick(product) {
   productToEdit.value = { ...product };
+  productEditImageUrl.value = product.image;
+  if (productEditPictureRef.value) {
+    productEditPictureRef.value.value = '';
+  }
 }
 
 async function onUpdateProduct() {
-  await axios.put(`/api/products/${productToEdit.value.id}/`, {
-    name: productToEdit.value.name,
-    quantity: productToEdit.value.quantity,
-    category: productToEdit.value.category,
+  const formData = new FormData();
+  formData.set('name', productToEdit.value.name);
+  formData.set('quantity', productToEdit.value.quantity);
+  formData.set('category', productToEdit.value.category);
+
+  if (productEditPictureRef.value?.files[0]) {
+    formData.append('image', productEditPictureRef.value.files[0]);
+  }
+
+  await axios.patch(`/api/products/${productToEdit.value.id}/`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    }
   });
+
   await fetchProducts();
 }
 
@@ -140,7 +167,15 @@ onBeforeMount(async () => {
           <div>Кол-во: {{ item.quantity }}</div>
           <div>{{ productTypesById[item.category]?.name }}</div>
           <div v-show="item.image">
-            <img :src="item.image" style="max-height: 60px;" alt="" />
+            <img
+              :src="item.image"
+              style="max-height: 60px; cursor: pointer;"
+              alt=""
+              data-bs-toggle="modal"
+              data-bs-target="#viewProductImageModal"
+              @click="openImageModal(item.image)"
+              title="Нажмите для увеличения"
+            />
           </div>
           <button
             class="btn btn-success"
@@ -188,6 +223,18 @@ onBeforeMount(async () => {
                   <label>Категория</label>
                 </div>
               </div>
+              <div class="col-12">
+                <label class="form-label text-muted">Изменить картинку:</label>
+                <input
+                  type="file"
+                  class="form-control"
+                  ref="productEditPictureRef"
+                  @change="productEditPictureChange"
+                />
+              </div>
+              <div class="col-12 text-center" v-if="productEditImageUrl">
+                <img :src="productEditImageUrl" style="max-height: 120px;" class="rounded" alt="" />
+              </div>
             </div>
           </div>
           <div class="modal-footer">
@@ -200,6 +247,19 @@ onBeforeMount(async () => {
             >
               Сохранить
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" id="viewProductImageModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Просмотр изображения</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body text-center p-2">
+            <img :src="modalImageUrl" class="img-fluid rounded" style="max-height: 75vh;" alt="" />
           </div>
         </div>
       </div>
