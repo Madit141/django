@@ -78,6 +78,22 @@ class Profile(models.Model):
     def __str__(self) -> str:
         return self.user.username if self.user else "no_user"
 
+class ProductImage(models.Model):
+    product = models.ForeignKey(
+        Product, 
+        on_delete=models.CASCADE, 
+        related_name='images', 
+        verbose_name="Товар"
+    )
+    image = models.ImageField("Изображение", upload_to="products/gallery")
+
+    class Meta:
+        verbose_name = "Изображение товара"
+        verbose_name_plural = "Изображения товаров"
+
+    def __str__(self):
+        return f"Фото для {self.product.name}"
+    
 @receiver(post_save, sender=User)
 def on_user_create(sender, instance, created, *args, **kwargs):
     if created:

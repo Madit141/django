@@ -12,6 +12,8 @@ const productAddImageUrl = ref();
 const productEditPictureRef = ref();
 const productEditImageUrl = ref();
 const modalImageUrl = ref('');
+const activeProductForAlbum = ref(null);
+const albumFileRef = ref();
 
 const productTypesById = computed(() => {
   return _.keyBy(productTypes.value, x => x.id);
@@ -41,6 +43,35 @@ function productEditPictureChange() {
 
 function openImageModal(url) {
   modalImageUrl.value = url;
+}
+
+function openAlbumModal(product) {
+  activeProductForAlbum.value = product;
+}
+
+async function onAddAlbumPhoto() {
+  if (!albumFileRef.value?.files[0] || !activeProductForAlbum.value) return;
+
+  const formData = new FormData();
+  formData.append('product', activeProductForAlbum.value.id);
+  formData.append('image', albumFileRef.value.files[0]);
+
+  await axios.post('/api/product-images/', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+
+  if (albumFileRef.value) {
+    albumFileRef.value.value = '';
+  }
+
+  await fetchProducts();
+  activeProductForAlbum.value = products.value.find(p => p.id === activeProductForAlbum.value.id);
+}
+
+async function onDeleteAlbumPhoto(photoId) {
+  await axios.delete(`/api/product-images/${photoId}/`);
+  await fetchProducts();
+  activeProductForAlbum.value = products.value.find(p => p.id === activeProductForAlbum.value.id);
 }
 
 async function onProductAdd() {
@@ -178,6 +209,18 @@ onBeforeMount(async () => {
             />
           </div>
           <button
+            class="btn btn-outline-info"
+            @click="openAlbumModal(item)"
+            data-bs-toggle="modal"
+            data-bs-target="#albumModal"
+            title="Открыть альбом"
+          >
+            <i class="bi bi-images"></i>
+            <span class="ms-1 badge bg-info text-dark" v-if="item.images?.length">
+              {{ item.images.length }}
+            </span>
+          </button>
+          <button
             class="btn btn-success"
             @click="onProductEditClick(item)"
             data-bs-toggle="modal"
@@ -264,6 +307,70 @@ onBeforeMount(async () => {
         </div>
       </div>
     </div>
+    <div class="modal fade" id="albumModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content" v-if="activeProductForAlbum">
+          <div class="modal-header">
+            <h5 class="modal-title">Альбом: {{ activeProductForAlbum.name }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            
+            <div v-if="!activeProductForAlbum.images || activeProductForAlbum.images.length === 0" class="text-center py-4 text-muted">
+              В альбоме пока нет фотографий
+            </div>
+
+            <div v-else id="carouselAlbumControls" class="carousel slide bg-dark rounded p-2" data-bs-ride="carousel">
+              <div class="carousel-inner text-center">
+                <div
+                  v-for="(img, idx) in activeProductForAlbum.images"
+                  :key="img.id"
+                  :class="['carousel-item', { active: idx === 0 }]"
+                >
+                  <img
+                    :src="img.image"
+                    class="d-block mx-auto img-fluid rounded"
+                    style="max-height: 400px; object-fit: contain;"
+                    alt=""
+                  />
+                  <div class="mt-2">
+                    <button class="btn btn-sm btn-outline-danger" @click="onDeleteAlbumPhoto(img.id)">
+                      <i class="bi bi-trash"></i> Удалить фото
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <button class="carousel-control-prev" type="button" data-bs-target="#carouselAlbumControls" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Назад</span>
+              </button>
+              <button class="carousel-control-next" type="button" data-bs-target="#carouselAlbumControls" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Вперед</span>
+              </button>
+            </div>
+
+            <hr />
+
+            <div class="row g-2 align-items-center">
+              <div class="col">
+                <label class="form-label mb-1">Добавить фото в альбом:</label>
+                <input class="form-control" type="file" ref="albumFileRef" />
+              </div>
+              <div class="col-auto align-self-end">
+                <button class="btn btn-primary" @click="onAddAlbumPhoto">
+                  <i class="bi bi-upload"></i> Загрузить
+                </button>
+              </div>
+            </div>
+
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -274,7 +381,7 @@ onBeforeMount(async () => {
   border: 1px solid silver;
   border-radius: 8px;
   display: grid;
-  grid-template-columns: 1fr auto auto auto auto auto;
+  grid-template-columns: 1fr auto auto auto auto auto auto;
   gap: 16px;
   align-items: center;
 }

@@ -1,11 +1,20 @@
 from django.contrib import admin
 
-from marketplace.models import Product, ProductType, Customer, Order, OrderItem, Profile
+from marketplace.models import Product, ProductType, Customer, Order, OrderItem, Profile, ProductImage
+
+class ProductImageInline(admin.TabularInline):
+    model = ProductImage
+    extra = 1
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ['id', 'name', 'quantity', 'category']
+    inlines = [ProductImageInline]
 
+@admin.register(ProductImage)
+class ProductImageAdmin(admin.ModelAdmin):
+    list_display = ['id', 'product', 'image']
+    
 @admin.register(ProductType)
 class TypeAdmin(admin.ModelAdmin):
     list_display = ["id", "name"]

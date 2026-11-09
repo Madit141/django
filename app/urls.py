@@ -27,6 +27,7 @@ from marketplace.api import (
     OrdersViewset,
     ProductsViewset,
     ProductTypesViewset,
+    ProductImagesViewset,
 )
 
 router = DefaultRouter()
@@ -35,6 +36,7 @@ router.register("product-types", ProductTypesViewset, basename="product-types")
 router.register("customers", CustomersViewset, basename="customers")
 router.register("orders", OrdersViewset, basename="orders")
 router.register("order-items", OrderItemsViewset, basename="order-items")
+router.register("product-images", ProductImagesViewset, basename="product-images")
 
 urlpatterns = [
     path('', ShowProductsView.as_view(), name='product_list'),

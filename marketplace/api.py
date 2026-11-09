@@ -1,13 +1,14 @@
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import mixins, viewsets
 
-from marketplace.models import Product, ProductType, Customer, Order, OrderItem
+from marketplace.models import Product, ProductType, Customer, Order, OrderItem, ProductImage
 from marketplace.serializers import (
     CustomerSerializer,
     OrderItemSerializer,
     OrderSerializer,
     ProductSerializer,
     ProductTypeSerializer,
+    ProductImageSerializer,
 )
 
 class ProductsViewset(
@@ -68,3 +69,15 @@ class OrderItemsViewset(
 ):
     queryset = OrderItem.objects.all()
     serializer_class = OrderItemSerializer
+
+
+class ProductImagesViewset(
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet
+):
+    queryset = ProductImage.objects.all()
+    serializer_class = ProductImageSerializer
