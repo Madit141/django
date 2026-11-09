@@ -22,6 +22,21 @@ class ProductsViewset(
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        user = self.request.user
+
+        if not user.is_authenticated:
+            return qs
+
+        if user.is_superuser:
+            user_filter = self.request.query_params.get("user")
+            if user_filter:
+                return qs.filter(user_id=user_filter)
+            return qs
+
+        return qs.filter(user=user)
+
 
 class ProductTypesViewset(
     mixins.CreateModelMixin,
