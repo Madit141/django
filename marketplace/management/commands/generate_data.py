@@ -12,12 +12,12 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         fake = Faker(['ru_RU'])
-        self.stdout.write("Начало генерации данных...")
+        self.stdout.write("Начало генерации данных")
 
         user = User.objects.filter(is_superuser=True).first() or User.objects.first()
 
         with transaction.atomic():
-            self.stdout.write("Создание типов товаров...")
+            self.stdout.write("Создание типов товаров")
             categories = []
             category_names = [
                 "Смартфоны", "Ноутбуки", "Наушники", "Телевизоры", "Планшеты",
@@ -30,7 +30,7 @@ class Command(BaseCommand):
                 cat, _ = ProductType.objects.get_or_create(name=cat_name)
                 categories.append(cat)
 
-            self.stdout.write("Генерация 1000 покупателей...")
+            self.stdout.write("Генерация 1000 покупателей")
             customers = []
             for _ in range(1000):
                 customer = Customer(
@@ -42,7 +42,7 @@ class Command(BaseCommand):
             Customer.objects.bulk_create(customers)
             saved_customers = list(Customer.objects.all())
 
-            self.stdout.write("Генерация 1000 товаров...")
+            self.stdout.write("Генерация 1000 товаров")
             products = []
             for _ in range(1000):
                 product = Product(
@@ -55,7 +55,7 @@ class Command(BaseCommand):
             Product.objects.bulk_create(products)
             saved_products = list(Product.objects.all())
 
-            self.stdout.write("Генерация 1000 заказов...")
+            self.stdout.write("Генерация 1000 заказов")
             orders = []
             for _ in range(1000):
                 order = Order(

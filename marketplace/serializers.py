@@ -20,10 +20,9 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ["id", "name", "quantity", "category", "image", "images", "user"]
-        read_only_fields = ["user"]
 
     def create(self, validated_data):
-        if 'request' in self.context and self.context['request'].user.is_authenticated:
+        if 'request' in self.context:
             validated_data['user'] = self.context['request'].user
         return super().create(validated_data)
     

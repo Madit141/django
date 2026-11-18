@@ -18,7 +18,7 @@ class Product(models.Model):
     quantity = models.PositiveIntegerField("Количество", default=0)
     category = models.ForeignKey(ProductType, on_delete=models.CASCADE, null=True, verbose_name="Категория")
     image = models.ImageField("Картинка", null=True, upload_to="products")
-    user = models.ForeignKey("auth.User", verbose_name="Пользователь", on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey("auth.User", verbose_name="Пользователь", on_delete=models.CASCADE, null=True)
 
     class Meta:
         verbose_name = "Товар"
