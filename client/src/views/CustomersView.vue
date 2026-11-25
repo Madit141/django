@@ -10,10 +10,17 @@ const customerAddImageUrl = ref();
 const customerEditPictureRef = ref();
 const customerEditImageUrl = ref();
 const modalImageUrl = ref('');
+const stats = ref({});
+
+async function fetchStats() {
+  const r = await axios.get("/api/customers/stats/");
+  stats.value = r.data;
+}
 
 async function fetchCustomers() {
   const r = await axios.get("/api/customers/");
   customers.value = r.data;
+  await fetchStats();
 }
 
 function customerAddPictureChange() {
@@ -134,6 +141,12 @@ onBeforeMount(async () => {
           </div>
         </div>
       </form>
+      <div class="alert alert-light border my-2 d-flex gap-4">
+        <div><strong>Всего покупателей:</strong> {{ stats.count ?? 0 }}</div>
+        <div><strong>Средний ID:</strong> {{ stats.avg ? stats.avg.toFixed(2) : 0 }}</div>
+        <div><strong>Макс. ID:</strong> {{ stats.max ?? 0 }}</div>
+        <div><strong>Мин. ID:</strong> {{ stats.min ?? 0 }}</div>
+      </div>
 
       <div>
         <div v-for="item in customers" class="customer-item">

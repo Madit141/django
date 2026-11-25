@@ -14,19 +14,41 @@ const productEditImageUrl = ref();
 const modalImageUrl = ref('');
 const activeProductForAlbum = ref(null);
 const albumFileRef = ref();
+const users = ref([]);
+const selectedUser = ref('');
+const stats = ref({});
 
 const productTypesById = computed(() => {
   return _.keyBy(productTypes.value, x => x.id);
 });
 
+async function fetchStats() {
+  const params = {};
+  if (selectedUser.value) {
+    params.user = selectedUser.value;
+  }
+  const r = await axios.get("/api/products/stats/", { params });
+  stats.value = r.data;
+}
+
 async function fetchProducts() {
-  const r = await axios.get("/api/products/");
+  const params = {};
+  if (selectedUser.value) {
+    params.user = selectedUser.value;
+  }
+  const r = await axios.get("/api/products/", { params });
   products.value = r.data;
+  await fetchStats();
 }
 
 async function fetchProductTypes() {
   const r = await axios.get("/api/product-types/");
   productTypes.value = r.data;
+}
+
+async function fetchUsers() {
+  const r = await axios.get("/api/users/");
+  users.value = r.data;
 }
 
 function productAddPictureChange() {
@@ -135,6 +157,7 @@ async function onUpdateProduct() {
 onBeforeMount(async () => {
   await fetchProducts();
   await fetchProductTypes();
+  await fetchUsers();
 });
 </script>
 
@@ -192,6 +215,25 @@ onBeforeMount(async () => {
         </div>
       </form>
 
+      <div class="row my-2" v-if="users.length > 0">
+        <div class="col-auto">
+          <div class="form-floating">
+            <select class="form-select" v-model="selectedUser" @change="fetchProducts">
+              <option value="">Все пользователи</option>
+              <option :value="u.id" v-for="u in users" :key="u.id">
+                {{ u.username }}
+              </option>
+            </select>
+            <label>Пользователь</label>
+          </div>
+        </div>
+      </div>
+      <div class="alert alert-light border my-2 d-flex gap-4">
+        <div><strong>Всего товаров:</strong> {{ stats.count ?? 0 }}</div>
+        <div><strong>Среднее кол-во:</strong> {{ stats.avg ? stats.avg.toFixed(2) : 0 }}</div>
+        <div><strong>Макс. кол-во:</strong> {{ stats.max ?? 0 }}</div>
+        <div><strong>Мин. кол-во:</strong> {{ stats.min ?? 0 }}</div>
+      </div>
       <div>
         <div v-for="item in products" class="product-item">
           <div>{{ item.name }}</div>

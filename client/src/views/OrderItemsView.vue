@@ -8,6 +8,7 @@ const orders = ref([]);
 const products = ref([]);
 const itemToAdd = ref({});
 const itemToEdit = ref({});
+const stats = ref({});
 
 const ordersById = computed(() => {
   return _.keyBy(orders.value, x => x.id);
@@ -17,9 +18,15 @@ const productsById = computed(() => {
   return _.keyBy(products.value, x => x.id);
 });
 
+async function fetchStats() {
+  const r = await axios.get("/api/order-items/stats/");
+  stats.value = r.data;
+}
+
 async function fetchOrderItems() {
   const r = await axios.get("/api/order-items/");
   orderItems.value = r.data;
+  await fetchStats();
 }
 
 async function fetchOrders() {
@@ -98,6 +105,12 @@ onBeforeMount(async () => {
           </div>
         </div>
       </form>
+      <div class="alert alert-light border my-2 d-flex gap-4">
+        <div><strong>Всего позиций:</strong> {{ stats.count ?? 0 }}</div>
+        <div><strong>Среднее кол-во:</strong> {{ stats.avg ? stats.avg.toFixed(2) : 0 }}</div>
+        <div><strong>Макс. кол-во:</strong> {{ stats.max ?? 0 }}</div>
+        <div><strong>Мин. кол-во:</strong> {{ stats.min ?? 0 }}</div>
+      </div>
 
       <div>
         <div v-for="item in orderItems" class="order-pos-item">

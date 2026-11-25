@@ -7,14 +7,21 @@ const orders = ref([]);
 const customers = ref([]);
 const orderToAdd = ref({});
 const orderToEdit = ref({});
+const stats = ref({});
 
 const customersById = computed(() => {
   return _.keyBy(customers.value, x => x.id);
 });
 
+async function fetchStats() {
+  const r = await axios.get("/api/orders/stats/");
+  stats.value = r.data;
+}
+
 async function fetchOrders() {
   const r = await axios.get("/api/orders/");
   orders.value = r.data;
+  await fetchStats();
 }
 
 async function fetchCustomers() {
@@ -77,6 +84,12 @@ onBeforeMount(async () => {
           </div>
         </div>
       </form>
+      <div class="alert alert-light border my-2 d-flex gap-4">
+        <div><strong>Всего заказов:</strong> {{ stats.count ?? 0 }}</div>
+        <div><strong>Средний ID:</strong> {{ stats.avg ? stats.avg.toFixed(2) : 0 }}</div>
+        <div><strong>Макс. ID:</strong> {{ stats.max ?? 0 }}</div>
+        <div><strong>Мин. ID:</strong> {{ stats.min ?? 0 }}</div>
+      </div>
 
       <div>
         <div v-for="item in orders" class="order-item">

@@ -5,10 +5,17 @@ import axios from 'axios';
 const productTypes = ref([]);
 const typeToAdd = ref({});
 const typeToEdit = ref({});
+const stats = ref({});
+
+async function fetchStats() {
+  const r = await axios.get("/api/product-types/stats/");
+  stats.value = r.data;
+}
 
 async function fetchProductTypes() {
   const r = await axios.get("/api/product-types/");
   productTypes.value = r.data;
+  await fetchStats();
 }
 
 async function onTypeAdd() {
@@ -60,6 +67,12 @@ onBeforeMount(async () => {
           </div>
         </div>
       </form>
+      <div class="alert alert-light border my-2 d-flex gap-4">
+        <div><strong>Всего типов:</strong> {{ stats.count ?? 0 }}</div>
+        <div><strong>Средний ID:</strong> {{ stats.avg ? stats.avg.toFixed(2) : 0 }}</div>
+        <div><strong>Макс. ID:</strong> {{ stats.max ?? 0 }}</div>
+        <div><strong>Мин. ID:</strong> {{ stats.min ?? 0 }}</div>
+      </div>
 
       <div>
         <div v-for="item in productTypes" class="type-item">

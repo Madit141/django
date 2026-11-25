@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.contrib.auth.models import User
 
 from marketplace.models import Product, ProductType, Customer, Order, OrderItem, ProductImage
 
@@ -20,9 +21,10 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ["id", "name", "quantity", "category", "image", "images", "user"]
+        read_only_fields = ["user"]
 
     def create(self, validated_data):
-        if 'request' in self.context:
+        if 'request' in self.context and self.context['request'].user.is_authenticated:
             validated_data['user'] = self.context['request'].user
         return super().create(validated_data)
     
@@ -43,3 +45,9 @@ class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem
         fields = "__all__"
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username"]
